@@ -1,6 +1,5 @@
-from itertools import permutations, chain, count
+from itertools import permutations
 import math
-from collections import Sequence
 
 
 def note_name(mpv):
