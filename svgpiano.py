@@ -3,11 +3,10 @@ from voicings import *
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
 
-pset = [0, 156, 225, 1248]
-print([note_name(i) for i in [x+12 for x in pset]])
+pset = [0, 4, 7, 14]
 
 full_list = get_voicings(pset)
-[print(i) for i in full_list]
+print(full_list)
 
 piano.draw_pianos(full_list, 10)
 piano.dwg.save()
