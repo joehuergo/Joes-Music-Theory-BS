@@ -1,5 +1,5 @@
 import piano
-from voicings import *
+from pset_ops import *
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
 
