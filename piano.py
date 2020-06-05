@@ -58,7 +58,7 @@ class Piano:
 
         mpminus1 = self.max_pitch-1
         keyval = self.keypos_map[mpminus1]
-        self.key_count = round_up(keyval, 7) + 1
+        self.key_count = round_up(keyval+1, 7) + 1
         self.hilite = [None] * (round_up(self.max_pitch, 12) + 1)
         self.w_index = 0
         self.b_index = 0
