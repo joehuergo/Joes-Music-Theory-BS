@@ -23,6 +23,7 @@ hilite_color = 'red'
 
 
 def draw_pianos(psets, p_space):
+    psets = [i.pset for i in psets.pset_list]
     if len(psets) == 0:
         print("No chords to draw. Will not create svg.")
         return

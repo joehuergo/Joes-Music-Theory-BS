@@ -25,7 +25,7 @@ class PSet:
             for b in range(len(psets[i]) - 1):
                 while psets[i][b] >= psets[i][b + 1]:
                     psets[i][b + 1] += 12
-        return PSetList(psets)
+        return PSetList([PSet(i) for i in psets])
 
     def permute_intervals(self):  # permutes set of intervals between adjacent notes
         iset_permutationss = [intervals_to_pitches(i) for i in permute_without_redundancy(self.isets[0])]
@@ -41,7 +41,7 @@ class PSetList:
         if type(filt) != list:
             filt = [filt]
         pset_list = []
-        intervals = [[i % 12 for i in flatten_list(i.isets)] for i in self.pset_list]
+        intervals = [[i % 12 for i in flatten_list(j.isets)] for j in self.pset_list]
         for i in range(len(self.pset_list)):
             if not common_data(filt, intervals[i]):
                 pset_list.append(self.pset_list[i])
