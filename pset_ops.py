@@ -2,6 +2,37 @@ from itertools import permutations
 import math
 
 
+# class for individual pitch sets
+class PSet:
+    def __init__(self, pset):
+        # pset is the pitch set. wow
+        self.pset = pset
+
+        # isets is a list of interval sets derived from the pitch set
+        # contains all intervals, from intervals between adjacent notes
+        # to the interval between the top and bottom note
+        isets = []
+        for i in range(1, len(self.pset)):
+            iset = []
+            for j in range(len(self.pset) - i):
+                iset.append(self.pset[i + j] - self.pset[j])
+            isets.append(iset)
+        self.isets = isets
+
+    def get_voicings(self):
+        psets = [list(x) for x in permutations(self.pset)]
+        for i in range(len(self.pset)):
+            for b in range(len(self.pset[i]) - 1):
+                while self.pset[i][b] >= self.pset[i][b + 1]:
+                    self.pset[i][b + 1] += 12
+        return PSetList(psets)
+
+    def permute_intervals(self):  # permutes set of intervals between adjacent notes
+        iset_permutationss = [intervals_to_pitches(i) for i in permute(self.isets[0])]
+        return PSetList(iset_permutationss)
+
+
+# class for operations on list of PSet objects
 class PSetList:
     def __init__(self, pset_list):
         self.pset_list = pset_list
@@ -43,36 +74,7 @@ class PSetList:
         return self
 
 
-# class for individual pitch sets
-class PSet:
-    def __init__(self, pset):
-        # pset is the pitch set. wow
-        self.pset = pset
-
-        # isets is a list of interval sets derived from the pitch set
-        # contains all intervals, from intervals between adjacent notes
-        # to the interval between the top and bottom note
-        isets = []
-        for i in range(1, len(self.pset)):
-            iset = []
-            for j in range(len(self.pset) - i):
-                iset.append(self.pset[i + j] - self.pset[j])
-            isets.append(iset)
-        self.isets = isets
-
-    def get_voicings(self):
-        psets = [list(x) for x in permutations(self.pset)]
-        for i in range(len(self.pset)):
-            for b in range(len(self.pset[i]) - 1):
-                while self.pset[i][b] >= self.pset[i][b + 1]:
-                    self.pset[i][b + 1] += 12
-        return PSetList(psets)
-
-    def permute_intervals(self):  # permutes set of intervals between adjacent notes
-        iset_permutationss = [intervals_to_pitches(i) for i in permute(self.isets[0])]
-        return PSetList(iset_permutationss)
-
-
+# general use functions
 def normalize_set(pset):
     if min(pset) < 0 or min(pset) > 11:
         sub = math.floor(min(pset) / 12) * 12
@@ -150,7 +152,6 @@ def depth_count(x):
     return int(isinstance(x, list)) and len(x) and 1 + max(map(depth_count, x))
 
 
-# some chord naming stuff
 def note_name(mpv):
     mdict = {
         0: "C",
