@@ -21,10 +21,10 @@ class PSet:
 
     def get_voicings(self):
         psets = [list(x) for x in permutations(self.pset)]
-        for i in range(len(self.pset)):
-            for b in range(len(self.pset[i]) - 1):
-                while self.pset[i][b] >= self.pset[i][b + 1]:
-                    self.pset[i][b + 1] += 12
+        for i in range(len(psets)):
+            for b in range(len(psets[i]) - 1):
+                while psets[i][b] >= psets[i][b + 1]:
+                    psets[i][b + 1] += 12
         return PSetList(psets)
 
     def permute_intervals(self):  # permutes set of intervals between adjacent notes
