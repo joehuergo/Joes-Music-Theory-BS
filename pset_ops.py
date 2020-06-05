@@ -28,7 +28,7 @@ class PSet:
         return PSetList(psets)
 
     def permute_intervals(self):  # permutes set of intervals between adjacent notes
-        iset_permutationss = [intervals_to_pitches(i) for i in permute(self.isets[0])]
+        iset_permutationss = [intervals_to_pitches(i) for i in permute_without_redundancy(self.isets[0])]
         return PSetList(iset_permutationss)
 
 
@@ -83,7 +83,7 @@ def normalize_set(pset):
     return pset
 
 
-def permute(pset):
+def permute_without_redundancy(pset):
     perm_iset = []
     for i in permutations(pset):
         if list(i) not in perm_iset:
