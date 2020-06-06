@@ -27,9 +27,24 @@ class PSet:
                     psets[i][b + 1] += 12
         return PSetList([PSet(i) for i in psets])
 
+    # wraps around negative pitches to wrap_octave, 0 wraps to first octave, 1 wraps to second, etc
+    def apply_moveset(self, move_set, iterations, wrap_octave):
+        if any(len(i) != len(self.pset) for i in move_set):
+            print("Move sets must be same size as pitch set.")
+            return self
+        psets = [self.pset]
+        for x in range(iterations):
+            for i in range(len(move_set)):
+                index = x * len(move_set) + i
+                psets.append([])
+                for j in range(len(move_set[i])):
+                    psets[index+1].append(psets[index][j] + move_set[i][j])
+        psets = [normalize_negatives(i, wrap_octave) for i in psets]
+        return PSetList([PSet(i) for i in psets])
+
     def permute_intervals(self):  # permutes set of intervals between adjacent notes
-        iset_permutationss = [intervals_to_pitches(i) for i in permute_without_redundancy(self.isets[0])]
-        return PSetList(iset_permutationss)
+        iset_permutations = [intervals_to_pitches(i) for i in permute_without_redundancy(self.isets[0])]
+        return PSetList([PSet(i) for i in iset_permutations])
 
 
 # class for operations on list of PSet objects
@@ -59,9 +74,9 @@ class PSetList:
 
     def filter_pset_span(self, filt):
         pset_list = []
-        for i in self.pset:
-            if max(i) - min(i) <= filt:
-                pset_list.append(i)
+        for i in self.pset_list:
+            if max(i.pset) - min(i.pset) <= filt:
+                pset_list.append(PSet(i.pset))
         self.pset_list = pset_list
         return self
 
@@ -73,11 +88,24 @@ class PSetList:
         self.pset_list = prune_copies(self.pset_list)
         return self
 
+    def normalize(self):
+        self.pset_list = [PSet(normalize(i.pset)) for i in self.pset_list]
+        return self
+
 
 # general use functions
-def normalize_set(pset):
+def normalize(pset):
     if min(pset) < 0 or min(pset) > 11:
         sub = math.floor(min(pset) / 12) * 12
+        for i in range(len(pset)):
+            pset[i] = pset[i] - sub
+    return pset
+
+
+# wraps around negative pitches to wrap_octave, 0 wraps to first octave, 1 wraps to second, etc
+def normalize_negatives(pset, wrap_octave):
+    if min(pset) < 0:
+        sub = math.floor(min(pset) / 12) * (wrap_octave * 12)
         for i in range(len(pset)):
             pset[i] = pset[i] - sub
     return pset

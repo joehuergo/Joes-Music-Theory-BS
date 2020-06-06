@@ -5,10 +5,14 @@ from pset_ops import *
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
 
-cm7 = PSet([0, 3, 7, 10])
-cm7_voicings_no_P5 = cm7.get_voicings().filter_intervals(5)
+moveset = [[0, 0, -2, -2], [-1, -1, 1, 1]]
 
-piano.draw_pianos(cm7_voicings_no_P5, 10)
+chord = PSet([12, 15, 19, 22])
+chord_progression = chord.apply_moveset(moveset, 14, 2)
+chord_selection = chord_progression.pset_list[0]
+voicings = chord_selection.get_voicings().normalize().filter_interval_span(7).filter_intervals(1)
 
-# drawing = svg2rlg('piano.svg')
-# renderPM.drawToFile(drawing, "file.png", fmt="PNG")
+piano.draw_pianos(voicings, 10)
+
+drawing = svg2rlg('piano.svg')
+renderPM.drawToFile(drawing, "piano.png", fmt="PNG")
