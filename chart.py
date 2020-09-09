@@ -109,7 +109,12 @@ class Chart:
 
     def __get_pset_text(self, pset):
         notename_list = [note_name(i + self.base_note) for i in pset]
-        string = str(pset) + " / " + str(notename_list)
+        string = "Pitches: " + str(pset) + " / " + str(notename_list)
+        return string
+
+    def __get_iset_text(self, iset):
+        interval_name_list = [interval_name(i) for i in iset]
+        string = "Intervals: " + str(iset) + " / " + str(interval_name_list)
         return string
 
     def __draw_label(self, label, x, y):
@@ -141,12 +146,15 @@ class Chart:
 
     def __process_content_flags(self):
         if self.draw_label:
-            self.offset_key.append(self.fontsize + self.unit_space)
+            self.offset_key.append(2 * self.fontsize + self.unit_space)
             # add to unit height
-            self.unit_height += self.margin + self.fontsize
-            self.labels = ["Pitches: " + self.__get_pset_text(self.plist.pset_list[i].pset)
-                           for i in range(len(self.plist.pset_list))]
-            label_maxwidth = len(max(self.labels, key=len)) * (0.65 * self.fontsize)
+            self.unit_height += 2 * (self.fontsize + self.unit_space)
+            self.p_labels = [self.__get_pset_text(self.plist.pset_list[i].pset)
+                             for i in range(len(self.plist.pset_list))]
+            self.i_labels = [self.__get_iset_text(self.plist.pset_list[i].iseqset[0])
+                             for i in range(len(self.plist.pset_list))]
+            label_maxwidth = len(max([max(self.p_labels, key=len), max(self.i_labels, key=len)])) * \
+                                (0.65 * self.fontsize)
             if label_maxwidth > self.width:
                 self.width = 5 + self.margin + label_maxwidth
 
@@ -164,7 +172,7 @@ class Chart:
             # add to unit height
             self.unit_height += self.margin + self.p_height
             width = math.ceil(max([max(p) for p in psets]) / 12) * \
-                (self.key_width * 7) + self.key_width + (2 * self.margin)
+                    (self.key_width * 7) + self.key_width + (2 * self.margin)
             if width > self.width:
                 self.width = width
 
@@ -178,10 +186,12 @@ class Chart:
         for i in range(len(self.plist.pset_list)):
             self.flags = 0
             if self.draw_label:
-                self.__draw_label(self.labels[i], self.margin, i * self.unit_height + self.fontsize + self.margin)
+                self.__draw_label(self.i_labels[i], self.margin, i * self.unit_height + self.fontsize + self.margin)
+                self.__draw_label(self.p_labels[i], self.margin, i * self.unit_height
+                                  + 2 * self.fontsize + self.margin)
                 self.flags += 1
             if self.draw_piano:
-                self.pianos.append(Piano((self.margin + 3,
+                self.pianos.append(Piano((self.margin + 2,
                                           i * self.unit_height + self.unit_offsets[self.flags] + self.margin),
                                          self.plist.pset_list[i].pset))
                 self.__draw_piano(self.pianos[i])
@@ -190,9 +200,9 @@ class Chart:
         return self
 
 
-test = PSet([0, 3, 7, 10]).get_voicings()
+test = PSet([0, 7, 14, 15, 22]).get_voicings()
 canvas = Chart('canvas.svg', test)
 canvas.draw_label = True
-canvas.fontsize = 16
+canvas.fontsize = 14
 canvas.draw_piano = True
 canvas.draw()
