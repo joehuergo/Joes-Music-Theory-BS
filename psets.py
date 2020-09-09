@@ -1,5 +1,6 @@
 from itertools import permutations
 import math
+import numpy as np
 
 
 # class for individual pitch sets
@@ -7,17 +8,10 @@ class PSet:
     def __init__(self, pset):
         # pset is the pitch set. wow
         self.pset = pset
-
-        # isets is a list of interval sets derived from the pitch set
+        # iseqset is a list of interval sequences derived from the pitch set
         # contains all intervals, from intervals between adjacent notes
         # to the interval between the top and bottom note
-        isets = []
-        for i in range(1, len(self.pset)):
-            iset = []
-            for j in range(len(self.pset) - i):
-                iset.append(self.pset[i + j] - self.pset[j])
-            isets.append(iset)
-        self.isets = isets
+        self.iseqset = get_intervals(pset)
 
     def get_voicings(self):
         psets = [list(x) for x in permutations(self.pset)]
@@ -38,25 +32,32 @@ class PSet:
                 index = x * len(move_set) + i
                 psets.append([])
                 for j in range(len(move_set[i])):
-                    psets[index+1].append(psets[index][j] + move_set[i][j])
+                    psets[index + 1].append(psets[index][j] + move_set[i][j])
         psets = [normalize_negatives(i, wrap_octave) for i in psets]
         return PSetList([PSet(i) for i in psets])
 
     def permute_intervals(self):  # permutes set of intervals between adjacent notes
-        iset_permutations = [intervals_to_pitches(i) for i in permute_without_redundancy(self.isets[0])]
-        return PSetList([PSet(i) for i in iset_permutations])
+        iseq_permutations = [intervals_to_pitches(i) for i in permute_distinct(self.iseqset[0])]
+        return PSetList([PSet(i) for i in iseq_permutations])
+
+    def transpose(self, trans):
+        self.pset = transpose_pitches(self.pset, trans)
+        return self
 
 
 # class for operations on list of PSet objects
 class PSetList:
     def __init__(self, pset_list):
         self.pset_list = pset_list
+        # moveset is a list of lists, as the name suggests these lists describe the difference
+        # between successive pitch sets - think of this as a mathy way of representing a chord progression
+        self.moveset = get_moveset([i.pset for i in self.pset_list])
 
     def filter_intervals(self, filt):
         if type(filt) != list:
             filt = [filt]
         pset_list = []
-        intervals = [[i % 12 for i in flatten_list(j.isets)] for j in self.pset_list]
+        intervals = [[i % 12 for i in flatten_list(j.iseqset)] for j in self.pset_list]
         for i in range(len(self.pset_list)):
             if not common_data(filt, intervals[i]):
                 pset_list.append(self.pset_list[i])
@@ -65,9 +66,9 @@ class PSetList:
 
     def filter_interval_span(self, filt):
         pset_list = []
-        iset = [i.isets[0] for i in self.pset_list]
+        iseq = [i.iseqset[0] for i in self.pset_list]
         for i in range(len(self.pset_list)):
-            if not any(x > filt for x in iset[i]):
+            if not any(x > filt for x in iseq[i]):
                 pset_list.append(self.pset_list[i])
         self.pset_list = pset_list
         return self
@@ -80,6 +81,10 @@ class PSetList:
         self.pset_list = pset_list
         return self
 
+    def transpose(self, trans):
+        for x in self.pset_list:
+            x.pset = transpose_pitches(x.pset, trans)
+
     def sort(self):
         self.pset_list = sorted({tuple(x): x for x in self.pset_list}.values())
         return self
@@ -90,6 +95,11 @@ class PSetList:
 
     def normalize(self):
         self.pset_list = [PSet(normalize(i.pset)) for i in self.pset_list]
+        return self
+
+    def crop(self, start, end):
+        self.pset_list = self.pset_list[start:end + 1]
+        self.moveset = get_moveset([i.pset for i in self.pset_list])
         return self
 
 
@@ -111,22 +121,40 @@ def normalize_negatives(pset, wrap_octave):
     return pset
 
 
-def permute_without_redundancy(pset):
-    perm_iset = []
+def permute_distinct(pset):
+    perm_iseq = []
     for i in permutations(pset):
-        if list(i) not in perm_iset:
-            perm_iset.append(list(i))
-    return perm_iset
+        if list(i) not in perm_iseq:
+            perm_iseq.append(list(i))
+    return perm_iseq
 
 
-def intervals_to_pitches(iset):
+def intervals_to_pitches(iseq):
     perm_pset = []
     p = 0
     perm_pset.append(0)
-    for j in iset:
+    for j in iseq:
         p += j
         perm_pset.append(p)
     return perm_pset
+
+
+def get_intervals(pset):
+    iseqset = []
+    for i in range(1, len(pset)):
+        iseq = []
+        for j in range(len(pset) - i):
+            iseq.append(pset[i + j] - pset[j])
+        iseqset.append(iseq)
+    return iseqset
+
+
+def get_moveset(pset_list):
+    moveset = []
+    for i in range(len(pset_list) - 1):
+        difference = list(np.array(pset_list[i + 1]) - np.array(pset_list[i]))
+        moveset.append(difference)
+    return moveset
 
 
 def transpose_pitches(pset, trans):
@@ -178,22 +206,3 @@ def prune_copies(inp):
 
 def depth_count(x):
     return int(isinstance(x, list)) and len(x) and 1 + max(map(depth_count, x))
-
-
-def note_name(mpv):
-    mdict = {
-        0: "C",
-        1: "Db",
-        2: "D",
-        3: "Eb",
-        4: "E",
-        5: "F",
-        6: "F#",
-        7: "G",
-        8: "Ab",
-        9: "A",
-        10: "Bb",
-        11: "B"
-    }
-    return mdict[mpv % 12] + str(math.floor(mpv / 12) - 1)
-
