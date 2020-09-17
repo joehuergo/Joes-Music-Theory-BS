@@ -105,22 +105,18 @@ class Sawada:
             while j >= self.a[t - p]:
                 self.run[s] = t - s
                 self.a[t] = j
-
                 self.num[j] -= 1
                 if self.num[j] == 0:
                     self.remove(j)
-
                 if j != self.K:
                     s2 = t + 1
                 if j == self.a[t - p]:
                     self.gen(t + 1, p, s2)
                 else:
                     self.gen(t + 1, t, s2)
-
                 if self.num[j] == 0:
                     self.add(j)
                 self.num[j] += 1
-
                 j = self.avail[j].next
             self.a[t] = self.K
         return self
@@ -130,16 +126,13 @@ class Sawada:
             self.avail[j].next = j - 1
             self.avail[j].prev = j + 1
         self.head = self.K
-
         for j in range(1, self.N + 1):
             self.a[j] = self.K
             self.run[j] = 0
-
         self.a[1] = 1
         self.num[1] -= 1
         if self.num[1] == 0:
             self.remove(1)
-
         self.gen(2, 1, 2)
         return self
 

@@ -1,5 +1,7 @@
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPM
 import svgwrite
-import math
+import os
 from psets import *
 
 
@@ -13,8 +15,10 @@ def round_up(num, mult):
 
 
 def longest(lis):
-    if not isinstance(lis, list): return 0
-    return (max([len(lis), ] + [len(subl) for subl in lis if isinstance(subl, list)] +
+    if not isinstance(lis, list):
+        return 0
+    else:
+        return (max([len(lis), ] + [len(subl) for subl in lis if isinstance(subl, list)] +
                 [longest(subl) for subl in lis]))
 
 
@@ -88,6 +92,7 @@ class Piano:
 
 
 class Chart:
+    png = False
     margin = 12
     width = 5
     height = margin + 5
@@ -154,7 +159,7 @@ class Chart:
             self.i_labels = [self.__get_iset_text(self.plist.pset_list[i].iseqset[0])
                              for i in range(len(self.plist.pset_list))]
             label_maxwidth = len(max([max(self.p_labels, key=len), max(self.i_labels, key=len)])) * \
-                                (0.65 * self.fontsize)
+                             (0.65 * self.fontsize)
             if label_maxwidth > self.width:
                 self.width = 5 + self.margin + label_maxwidth
 
@@ -197,12 +202,7 @@ class Chart:
                 self.__draw_piano(self.pianos[i])
                 self.flags += 1
         self.dwg.save()
+        if self.png:
+            drawing = svg2rlg(self.filename)
+            renderPM.drawToFile(drawing, os.path.splitext(self.filename)[0] + ".png", fmt="PNG")
         return self
-
-
-test = PSet([0, 7, 14, 15, 22]).get_voicings()
-canvas = Chart('canvas.svg', test)
-canvas.draw_label = True
-canvas.fontsize = 14
-canvas.draw_piano = True
-canvas.draw()
